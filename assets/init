@@ -1,0 +1,53 @@
+#!/bin/bash
+
+set +x
+
+LDAP_HOST=${LDAP_HOST:-}
+LDAP_PORT=${LDAP_PORT:-389}
+LDAP_DOMAIN=${LDAP_DOMAIN:-example.com}
+LDAP_ORGANIZATION=${LDAP_ORGANIZATION:-"LDAP Server"}
+
+if [ "${SLAPD_PORT_389_TCP_ADDR}" != "" ]; then
+    LDAP_HOST=$SLAPD_PORT_389_TCP_ADDR
+    LDAP_PORT=$SLAPD_PORT_389_TCP_PORT
+fi
+
+if [ "${SLAPD_ENV_LDAP_DOMAIN}" != "" ]; then
+    LDAP_DOMAIN=$SLAPD_ENV_LDAP_DOMAIN
+fi
+
+if [ "${SLAPD_ENV_LDAP_ORGANIZATION}" != "" ]; then
+    LDAP_ORGANIZATION=$SLAPD_ENV_LDAP_ORGANIZATION
+fi
+
+base_dn=$(echo $LDAP_DOMAIN | awk -F"." '{for (i=1;i<=NF-1;i++) printf "dc="$i","; printf "dc="$i}')
+sed -i 's/dc=example,dc=com/'${base_dn}'/' /etc/phpldapadmin/config.php  
+sed -i "s/'server','host','127.0.0.1'/'server','host','${LDAP_HOST}'/" /etc/phpldapadmin/config.php
+sed -i "s/[^\$]*\$servers->setValue('server','port',389)/\$servers->setValue('server','port',${LDAP_PORT})/" /etc/phpldapadmin/config.php
+sed -i "s/My LDAP Server/${LDAP_ORGANIZATION}/" /etc/phpldapadmin/config.php
+sed -i "s/'password_hash'/'password_hash_custom'/" /usr/share/phpldapadmin/lib/TemplateRender.php
+
+service php5-fpm start
+service nginx start
+
+case "$1" in
+	start)
+		tail -f /var/log/nginx/*
+		;;
+	*)
+		if [ -x $1 ]; then
+			prog=$1
+			shift 1
+			$prog $@
+		else
+			prog=$(which $1)
+			if [ -n "${prog}" ]; then
+				shift 1
+				$prog $@
+			fi
+		fi
+		exit 1
+		;;
+esac
+
+exit 0
