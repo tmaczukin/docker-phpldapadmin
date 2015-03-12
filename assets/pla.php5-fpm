@@ -18,3 +18,4 @@ pm.status_path = /fpm-status
 
 ping.path = /fpm-ping
 
+php_value[expose_php] = Off
