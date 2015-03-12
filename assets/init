@@ -26,6 +26,7 @@ sed -i "s/'server','host','127.0.0.1'/'server','host','${LDAP_HOST}'/" /etc/phpl
 sed -i "s/[^\$]*\$servers->setValue('server','port',389)/\$servers->setValue('server','port',${LDAP_PORT})/" /etc/phpldapadmin/config.php
 sed -i "s/My LDAP Server/${LDAP_ORGANIZATION}/" /etc/phpldapadmin/config.php
 sed -i "s/'password_hash'/'password_hash_custom'/" /usr/share/phpldapadmin/lib/TemplateRender.php
+sed -i "s/ != 'on'/ != 'yes'/" /usr/share/phpldapadmin/lib/functions.php
 sed -i "s/# server_tokens .*;/server_tokens off;/" /etc/nginx/nginx.conf
 sed -i 's/$https if_not_empty/$http_https if_not_empty/' /etc/nginx/fastcgi_params
 
